@@ -2,12 +2,15 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.GLUT import *
 import math
 import random
+import time
 from DDA_line import *
 from bresenham_line import *
 from midpoint_circle import *
 from midpoint_ellipse import *
+
 WHITE = (1, 1, 1)
 RED = (1, 0, 0)
 GREEN = (0, 1, 0)
@@ -16,16 +19,21 @@ YELLOW = (1, 1, 0)
 CYAN = (0, 1, 1)
 
 def draw_spaceship(x, y):
-    # Ship body (triangle) using Bresenham lines
-    draw_line_bresenham(x, y, x - 20, y - 30, CYAN)  # Left wing
-    draw_line_bresenham(x, y, x + 20, y - 30, CYAN)   # Right wing
-    draw_line_bresenham(x - 20, y - 30, x + 20, y - 30, RED)  # Base
+    draw_line_bresenham(x, y, x - 20, y - 30, CYAN)
+    draw_line_bresenham(x, y, x + 20, y - 30, CYAN)
+    draw_line_bresenham(x - 20, y - 30, x + 20, y - 30, CYAN)
 
 def draw_asteroid(x, y, size):
-    draw_circle_midpoint(x, y, size, (0.5, 0.5, 0.5))
+    draw_circle_midpoint(x, y, size, YELLOW)
 
 def draw_enemy(x, y):
-    draw_ellipse_midpoint(x, y, 15, 10, RED)
+    draw_ellipse_midpoint(x, y, 15, 10, GREEN)
+
+def draw_text(x, y, text, font_size=18):
+    glWindowPos2f(x, y)
+    font = GLUT_BITMAP_HELVETICA_18 if font_size == 18 else GLUT_BITMAP_TIMES_ROMAN_24 # type: ignore
+    for ch in text:
+        glutBitmapCharacter(font, ord(ch))
 
 def init():
     pygame.init()
@@ -33,74 +41,148 @@ def init():
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     gluOrtho2D(0, display[0], 0, display[1])
     glPointSize(3)
+    glutInit()
 
-def main():
-    init()
+def game_over_screen(score):
+    glClear(GL_COLOR_BUFFER_BIT)
+    glColor3f(1, 0, 0)
+    draw_text(350, 300, "GAME OVER", 24)
+    glColor3f(1, 1, 1)
+    draw_text(350, 250, f"Score: {score}", 24)
+    draw_text(300, 200, "Press R to Restart", 24)
+    draw_text(300, 150, "Press Q to Quit", 24)
+    pygame.display.flip()
+    
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False, False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    return True, False
+                if event.key == pygame.K_q:
+                    return False, True
+
+def game_loop():
     spaceship_x, spaceship_y = 400, 100
     bullets = []
     asteroids = [[random.randint(50, 750), random.randint(400, 550)] for _ in range(5)]
     enemies = [[random.randint(100, 700), random.randint(300, 500)] for _ in range(3)]
+    score = 0
+    lives = 3
+    game_active = True
+    level = 1
+    start_time = time.time()
     
     clock = pygame.time.Clock()
-    running = True
     
-    while running:
+    while game_active:
+        current_time = time.time()
+        level_time = current_time - start_time
+        level = min(5, 1 + int(level_time / 30))
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                return score, True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     bullets.append([spaceship_x, spaceship_y])
+                if event.key == pygame.K_ESCAPE:
+                    return score, True
         
-        # Handle key presses
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and spaceship_x > 30:
             spaceship_x -= 5
         if keys[pygame.K_RIGHT] and spaceship_x < 770:
             spaceship_x += 5
         
-        # Update bullets
         for bullet in bullets[:]:
             bullet[1] += 10
             if bullet[1] > 600:
                 bullets.remove(bullet)
         
-        # Update asteroids
         for asteroid in asteroids[:]:
-            asteroid[1] -= 1
+            asteroid[1] -= 1 + level * 0.5
             if asteroid[1] < 0:
                 asteroids.remove(asteroid)
                 asteroids.append([random.randint(50, 750), 600])
         
-        # Collision detection
+        for enemy in enemies[:]:
+            enemy[1] -= 0.5 + level * 0.3
+            if enemy[1] < 0:
+                enemies.remove(enemy)
+                enemies.append([random.randint(100, 700), 600])
+        
         for bullet in bullets[:]:
             for asteroid in asteroids[:]:
                 if math.dist(bullet, asteroid) < 20:
                     bullets.remove(bullet)
                     asteroids.remove(asteroid)
                     asteroids.append([random.randint(50, 750), 600])
+                    score += 10
+                    break
+            
+            for enemy in enemies[:]:
+                if math.dist(bullet, enemy) < 25:
+                    bullets.remove(bullet)
+                    enemies.remove(enemy)
+                    enemies.append([random.randint(100, 700), 600])
+                    score += 20
                     break
         
-        # Drawing
+        for asteroid in asteroids[:]:
+            if math.dist([spaceship_x, spaceship_y], asteroid) < 30:
+                asteroids.remove(asteroid)
+                asteroids.append([random.randint(50, 750), 600])
+                lives -= 1
+                if lives <= 0:
+                    return score, False
+        
+        for enemy in enemies[:]:
+            if math.dist([spaceship_x, spaceship_y], enemy) < 30:
+                enemies.remove(enemy)
+                enemies.append([random.randint(100, 700), 600])
+                lives -= 1
+                if lives <= 0:
+                    return score, False
+        
         glClear(GL_COLOR_BUFFER_BIT)
         
-        # Draw spaceship
         draw_spaceship(spaceship_x, spaceship_y)
         
-        # Draw asteroids
         for asteroid in asteroids:
             draw_asteroid(asteroid[0], asteroid[1], 15)
         
-        # Draw enemies
         for enemy in enemies:
             draw_enemy(enemy[0], enemy[1])
         
-        # Draw bullets (using DDA algorithm)
         for bullet in bullets:
-            draw_line_dda(bullet[0], bullet[1], bullet[0], bullet[1] + 10, YELLOW)
+            draw_line_dda(bullet[0], bullet[1], bullet[0], bullet[1] + 10, RED)
+        
+        glColor3f(1, 1, 1)
+        draw_text(20, 580, f"Score: {score}")
+        draw_text(20, 550, f"Lives: {lives}")
+        draw_text(20, 520, f"Level: {level}")
+        draw_text(20, 490, f"Time: {int(level_time)}s")
         
         pygame.display.flip()
         clock.tick(60)
+    
+    return score, False
+
+def main():
+    init()
+    quit_game = False
+    
+    while not quit_game:
+        final_score, should_quit = game_loop()
+        if should_quit:
+            break
+        
+        restart, quit_game = game_over_screen(final_score)
+        if not restart:
+            break
     
     pygame.quit()
 

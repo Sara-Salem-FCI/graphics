@@ -10,7 +10,7 @@ from DDA_line import *
 from bresenham_line import *
 from midpoint_circle import *
 from midpoint_ellipse import *
-
+ 
 WHITE = (1, 1, 1)
 RED = (1, 0, 0)
 GREEN = (0, 1, 0)

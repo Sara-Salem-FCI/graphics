@@ -18,7 +18,6 @@ def draw_ellipse_midpoint(xc, yc, a, b, color):
             p += 2 * b_sq * x - 2 * a_sq * y + b_sq
             y -= 1
         x += 1
-    # المنطقة الثانية
     p = b_sq * (x + 0.5)**2 + a_sq * (y - 1)**2 - a_sq * b_sq
     while y >= 0:
         glVertex2f(xc + x, yc + y)

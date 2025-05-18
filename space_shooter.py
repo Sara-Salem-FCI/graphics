@@ -63,7 +63,7 @@ def draw_bullet(x, y):
 def draw_text(x, y, text, font_size=18, color=(1, 1, 1)):
     glColor3f(*color)
     glWindowPos2f(x, y)
-    font = GLUT_BITMAP_HELVETICA_18 if font_size == 18 else GLUT_BITMAP_TIMES_ROMAN_24
+    font = GLUT_BITMAP_HELVETICA_18 if font_size == 18 else GLUT_BITMAP_TIMES_ROMAN_24 # type: ignore
     for ch in text:
         glutBitmapCharacter(font, ord(ch))
 

@@ -1,8 +1,6 @@
-# transformations.py
 import math
 
 def rotate_point(x, y, angle, cx=0, cy=0):
-    """Rotate a point around a center point with float support"""
     angle_rad = math.radians(angle)
     x = float(x)
     y = float(y)

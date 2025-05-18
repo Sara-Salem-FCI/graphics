@@ -41,27 +41,23 @@ def draw_spaceship(x, y, angle=0):
     draw_line_bresenham(points[1][0], points[1][1], points[2][0], points[2][1], CYAN)
 
 def draw_asteroid(x, y, size, rotation=0):
-    """رسم الكويكبات مع إمكانية الدوران"""
     if rotation != 0:
         x, y = rotate_point(x, y, rotation, x, y)
     draw_circle_midpoint(x, y, size, YELLOW)
 
 def draw_enemy(x, y, pulse=0):
-    """رسم الأعداء مع تأثير النبض"""
     pulse_factor = 1 + math.sin(pulse) * 0.1
     rx = 15 * pulse_factor
     ry = 10 * pulse_factor
     draw_ellipse_midpoint(x, y, rx, ry, GREEN)
 
 def draw_text(x, y, text, font_size=18):
-    """رسم النصوص على الشاشة"""
     glWindowPos2f(x, y)
     font = GLUT_BITMAP_HELVETICA_18 if font_size == 18 else GLUT_BITMAP_TIMES_ROMAN_24
     for ch in text:
         glutBitmapCharacter(font, ord(ch))
 
 def init():
-    """تهيئة بيئة اللعبة"""
     pygame.init()
     display = (800, 600)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
@@ -70,7 +66,6 @@ def init():
     glutInit()
 
 def game_over_screen(score):
-    """عرض شاشة نهاية اللعبة"""
     glClear(GL_COLOR_BUFFER_BIT)
     glColor3f(1, 0, 0)
     draw_text(350, 300, "GAME OVER", 24)
@@ -92,7 +87,6 @@ def game_over_screen(score):
                     return False, True
 
 def game_loop():
-    """الحلقة الرئيسية للعبة"""
     spaceship_x, spaceship_y = 400, 100
     spaceship_angle = 0
     bullets = []
@@ -212,7 +206,6 @@ def game_loop():
     return score, False
 
 def main():
-    """الدالة الرئيسية"""
     init()
     quit_game = False
     

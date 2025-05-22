@@ -1,9 +1,7 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-# bresenham_line.py
 def draw_line_bresenham(x1, y1, x2, y2, color):
-    """رسم خط باستخدام خوارزمية بريزينهام مع دعم القيم العشرية"""
     x1, y1, x2, y2 = int(round(x1)), int(round(y1)), int(round(x2)), int(round(y2))
     
     dx = abs(x2 - x1)
